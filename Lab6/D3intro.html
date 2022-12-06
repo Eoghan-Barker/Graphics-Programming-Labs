@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>D3.js Demo</title>
+    <meta charset="UTF-8" />
+    <style type="text/css">
+    </style>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      // Retrieve the JSON data
+      $.getJSON(
+        "https://jsonblob.com/api/1039328202555932672",
+        function (data) {
+          console.log(data);
+          plotCO2Data(data);
+        }
+      );
+
+      // Executed once the file has been downloaded
+      function plotCO2Data(data) {
+        // Setup SVG size and margins
+        var margin = { top: 50, right: 50, bottom: 50, left: 50 },
+          width = 900 - margin.left - margin.right,
+          height = 670 - margin.top - margin.bottom;
+
+        // Create X and Y scales for interpolated CO2 value (y-axis) and time (x-axis)
+        var parseDate = d3.timeParse("%Y-%m-%d");
+        var x = d3
+          .scaleTime()
+          .domain(
+            d3.extent(data, function (d) {
+              return parseDate(d["Date"]);
+            })
+          )
+          .range([0, width]);
+        var y = d3
+          .scaleLinear()
+          .domain(
+            d3.extent(data, function (d) {
+              return d["Interpolated"];
+            })
+          )
+          .range([height, 0]);
+
+        // Create axes and line
+        var xAxis = d3.axisBottom(x).ticks(5); // specify the number of ticks
+        var yAxis = d3.axisLeft(y).ticks(5);
+
+        //interpolated data
+        var valueLine = d3
+          .line() // draw line - maps x,y coordinates for each point using the scale
+          .x(function (d) {
+            return x(parseDate(d["Date"]));
+          }) // x pixel value for each point
+          .y(function (d) {
+            return y(d["Interpolated"]);
+          }); // y pixel value for each point
+
+        // trend data
+        var trendLine = d3
+          .line()
+          .x(function (d) {
+            return x(parseDate(d["Date"]));
+          })
+          .y(function (d) {
+            return y(d["Trend"]);
+          });
+
+        // Add SVG element
+        var svg = d3
+          .select("body")
+          .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          // Adds an offset so the numeric values are readable
+          .attr(
+            "transform",
+            "translate(" + margin.left + "," + margin.top + ")"
+          );
+
+        // Add the axes to the svg
+        svg
+          .append("g") // append a <g> - group element
+          .attr("class", "x axes") // specify classes
+          .attr("transform", "translate(0," + height + ")")
+          .call(xAxis); // let the axis work
+
+        svg.append("g").attr("class", "y axes").call(yAxis);
+
+        // Draw the interpolated line on the svg
+        svg
+          .append("path") // add the valueline path
+          .style("stroke", "red")
+          .style("fill", "none")
+          .attr("d", valueLine(data));
+
+        // Draw the trend line on the svg
+        svg
+          .append("path") // add the valueline path
+          .style("stroke", "black")
+          .style("fill", "none")
+          .attr("d", trendLine(data));
+
+        // Add Labels to the axes
+        svg
+          .append("text")
+          .attr("class", "x label")
+          .attr("text-anchor", "end")
+          .attr("x", width)
+          .attr("y", height - 6)
+          .text("Date");
+
+        svg
+          .append("text")
+          .attr("class", "y label")
+          .attr("text-anchor", "end")
+          .attr("y", 6)
+          .attr("dy", ".75em")
+          .attr("transform", "rotate(-90)")
+          .text("Atmospheric Carbon Dioxide");
+
+        svg
+          .append("text")
+          .attr("class", "label")
+          .attr("font-weight", "bold")
+          .attr("x", 350)
+          .text("Trends in atmospheric carbon dioxide");
+    }
+    </script>
+  </body>
+</html>

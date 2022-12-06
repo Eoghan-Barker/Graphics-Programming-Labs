@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html>
+  <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Canvas</title>
+
+    <style type="text/css">
+      body {
+        background-color: white;
+      }
+      canvas {
+        border: black;
+        border-style: solid;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!--Creat Heading Above Canvas-->
+    <!--<h1>Eoghan Barker</h1>-->
+    <canvas id="canvas-for-ball" width="600" height="400"></canvas>
+
+    <script type="text/javascript">
+      // Gets a handle to the element with id canvasOne.
+      var canvas = document.getElementById("canvas-for-ball");
+      // Get a 2D context for the canvas.
+      var ctx = canvas.getContext("2d");
+
+      let balls = [];
+      var counter = 0;
+      var i;
+      var numBalls = 5;
+      var playerSpeed = 10;
+
+      // Ball Class
+      class Ball {
+        constructor(x, y, r, sx, sy, c) {
+          this.x = x;
+          this.y = y;
+          this.velocityX = sx;
+          this.velocityY = sy;
+          this.radius = r;
+          this.rotation = 0.1;
+          this.speed = 0;
+          this.xCo1 = this.x + this.radius * Math.cos((11 * Math.PI) / 6);
+          this.yCo1 = this.y + this.radius * Math.sin((11 * Math.PI) / 6);
+          this.xCo2 = this.x + this.radius * Math.cos((5 * Math.PI) / 6);
+          this.yCo2 = this.y + this.radius * Math.sin((5 * Math.PI) / 6);
+          this.color = c;
+        }
+
+        drawBall() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+          ctx.stroke();
+
+          // Draw line intersecting ball at 30 degrees
+          ctx.moveTo(this.xCo1, this.yCo1);
+          ctx.lineTo(this.xCo2, this.yCo2);
+          ctx.stroke();
+
+          // Draw Semi circle to create red half of ball
+          ctx.beginPath();
+          ctx.arc(
+            this.x,
+            this.y,
+            this.radius,
+            (((5 + this.speed) % 12) * Math.PI) / 6,
+            (((11 + this.speed) % 12) * Math.PI) / 6
+          );
+          ctx.fillStyle = this.color;
+          ctx.fill();
+
+          // Draw Circle within ball and fill in with white to cover line
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius / 2.5, 0, 2 * Math.PI);
+          ctx.fillStyle = "white";
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // Change velocity and detect edges
+        moveBall() {
+          // Check for bottom and top edge
+          if (this.y > 400 - this.radius || this.y < 0 + this.radius) {
+            this.velocityY *= -1;
+          }
+
+          // check for left and right edge
+          if (this.x > 600 - this.radius || this.x < 0 + this.radius) {
+            this.velocityX *= -1;
+          }
+
+          // add gravity
+          
+          if(this.y < 400 - this.radius){
+            this.velocityY += 0.08;
+          }
+           
+            
+          //change direction
+          this.x += this.velocityX;
+          this.y += this.velocityY;
+
+          // update coords for line
+          this.xCo1 = this.x + this.radius * Math.cos((11 * Math.PI) / 6);
+          this.yCo1 = this.y + this.radius * Math.sin((11 * Math.PI) / 6);
+          this.xCo2 = this.x + this.radius * Math.cos((5 * Math.PI) / 6);
+          this.yCo2 = this.y + this.radius * Math.sin((5 * Math.PI) / 6);
+        }
+
+        rotateBall() {
+          // move cartisian coords around the circle
+          this.xCo1 =
+            this.x +
+            this.radius * Math.cos((((11 + this.speed) % 12) * Math.PI) / 6);
+          this.yCo1 =
+            this.y +
+            this.radius * Math.sin((((11 + this.speed) % 12) * Math.PI) / 6);
+          this.xCo2 =
+            this.x +
+            this.radius * Math.cos((((5 + this.speed) % 12) * Math.PI) / 6);
+          this.yCo2 =
+            this.y +
+            this.radius * Math.sin((((5 + this.speed) % 12) * Math.PI) / 6);
+
+          // changes speed and direction of rotaion
+          this.speed += this.rotation;
+        }
+
+        arrowLeft() {
+          this.velocityX--;
+        }
+
+        arrowUp() {
+          this.velocityY--;
+        }
+
+        arrowRight() {
+          this.velocityX++;
+        }
+
+        arrowDown() {
+          this.velocityY++;
+        }
+
+        clickMove(eventX, eventY) {
+          this.x = eventX - canvas.offsetLeft;
+          this.y = eventY - canvas.offsetTop;
+        }
+
+        increaseSpin() {
+          this.rotation += 0.1;
+        }
+
+        decreaseSpin() {
+          this.rotation -= 0.1;
+        }
+
+        //Getters
+        getX() {
+          return this.x;
+        }
+
+        getY() {
+          return this.y;
+        }
+
+        getRadius() {
+          return this.radius;
+        }
+      }
+
+      //player movement
+      //keypresses with jQuery
+      $(document.body).on("keydown", function (e) {
+        console.log(e.which);
+        switch (e.which) {
+          // key code for left arrow
+          case 37:
+            console.log("left arrow key pressed!");
+            player.arrowLeft();
+            break;
+
+          // key code for up arrow
+          case 38:
+            console.log("up arrow key pressed!");
+            player.arrowUp();
+            break;
+
+          // key code for right arrow
+          case 39:
+            console.log("right arrow key pressed!");
+            player.arrowRight();
+            break;
+
+          // key code for down arrow
+          case 40:
+            console.log("down arrow key pressed!");
+            player.arrowDown();
+            break;
+        }
+      });
+
+      // Callback function for animation
+      function repeatme() {
+        ctx.clearRect(0, 0, 600, 400);
+
+        // Move balls
+        player.drawBall();
+        player.moveBall();
+        player.rotateBall();
+        b2.drawBall();
+        b2.moveBall();
+        b2.rotateBall();
+
+
+        collisionDetect();
+        window.requestAnimationFrame(repeatme);
+      }
+
+      //  create player, generate Balls and Start animation
+      player = new Ball(300, 200, 15, 4, 2, "red");
+      b2 = new Ball(200, 200, 10, -3, -3, "green");
+      repeatme();
+
+
+      function collisionDetect() {
+        // Get distance between center of balls
+        var x1 = player.getX();
+        var y1 = player.getY();
+        var x2 = b2.getX();
+        var y2 = b2.getY();
+        var r = player.getRadius() + b2.getRadius();
+
+        var lineLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+        // When collision detected then use counter to ensure collision message remains on screen for 0.75 seconds
+        // Delete ball on collision 
+        if (lineLength <= r) {
+          counter = 40;
+          b2 = new Ball(0, 0, 0, 0, 0, "white");;
+        }
+
+        if (counter > 0) {
+          ctx.font = "30px Arial";
+          ctx.fillStyle = "red";
+          ctx.fillText("Collision Detected!", 175, 200);
+          counter--;
+          //respawn ball
+          b2 = new Ball(200, 200, 10, -3, -3, "green");
+          
+        }
+        
+       
+    ;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Canvas</title>
+
+    <style type="text/css">
+      canvas {
+        border: black;
+        border-style: solid;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="canvasOne" width="600" height="400"></canvas>
+
+    <script type="text/javascript">
+      var pacmanX = 400;
+      var pacmanY = 100;
+
+      // Gets a handle to the element with id canvasOne.
+      var canvas = document.getElementById("canvasOne");
+
+      // Set the canvas up for drawing in 2D.
+      var ctx = canvas.getContext("2d");
+
+      // Adding text
+      ctx.font = "15px Arial";
+      ctx.fillText("Eoghan Barker", 85, 50);
+
+      // Set the fill colour to bright red.
+      ctx.fillStyle = "rgba(255, 0, 255, 0.8)";
+
+      // Create a filled rectangle
+      ctx.fillRect(30, 30, 50, 50);
+
+      // Create second rectangle that is transparent and partially covered by the 1st rectangle
+      ctx.fillStyle = "rgba(0, 255, 0, 0.4)";
+      ctx.fillRect(60, 60, 50, 50);
+
+      // Draw a circle
+      ctx.beginPath();
+      ctx.arc(200, 125, 50, 0, 2 * Math.PI);
+      ctx.strokeStyle = "rgba(0, 0, 0, 1)";
+      ctx.stroke();
+      ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+      ctx.fill();
+      ctx.closePath();
+
+      // Draw another
+      ctx.beginPath();
+      ctx.arc(400, 250, 50, 0, 2 * Math.PI);
+      ctx.strokeStyle = "rgba(0, 0, 255, 1)";
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+      ctx.fill();
+      ctx.closePath();
+
+      // Draw a square with a circle centered
+      ctx.beginPath();
+      ctx.arc(100, 300, 50, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.closePath();
+      ctx.strokeRect(50, 250, 100, 100);
+
+      drawingPacman();
+
+      // Draw Pacman
+      function drawingPacman() {
+        ctx.beginPath();
+        ctx.arc(pacmanX, pacmanY, 50, Math.PI / 4, 2 * Math.PI - Math.PI / 4);
+        ctx.lineTo(pacmanX, pacmanY);
+        ctx.closePath(); // closePath works instead of finding the cartisean coordinates so I've commented them out
+        //ctx.lineTo(535.35533906, 100 + 35.35533906);
+        //ctx.lineTo(500+(50*Math.cos(45)), 100 + (50*Math.sin(45)));
+        ctx.stroke();
+        ctx.fillStyle = "#FF0";
+        ctx.fill();
+
+        // Wait 3 seconds then move pacman 50px right
+        setTimeout(function () {
+          ctx.clearRect(340, 20, 190, 170);
+          pacmanX = 450;
+          drawingPacman();
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html>
+  <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Canvas</title>
+
+    <style type="text/css">
+      canvas {
+        border: 1px solid grey;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!--Creat Heading Above Canvas-->
+    <h1>Eoghan Barker</h1>
+    <canvas id="canvas-for-ball"></canvas>
+
+    <script type="text/javascript">
+      // Gets a handle to the element with id canvasOne.
+      var canvas = document.getElementById("canvas-for-ball");
+      // Get a 2D context for the canvas.
+      var ctx = canvas.getContext("2d");
+      // Make the fill style red.
+      ctx.fillStyle = "rgb(255, 0, 0)";
+
+      class Ball {
+        constructor(x, y, r, sx, sy) {
+          this.x = x;
+          this.y = y;
+          this.velocityX = sx;
+          this.velocityY = sy;
+          this.radius = r;
+          this.rotation = 0.1;
+          this.speed = 0;
+          this.xCo1 = this.x + this.radius * Math.cos((11 * Math.PI) / 6);
+          this.yCo1 = this.y + this.radius * Math.sin((11 * Math.PI) / 6);
+          this.xCo2 = this.x + this.radius * Math.cos((5 * Math.PI) / 6);
+          this.yCo2 = this.y + this.radius * Math.sin((5 * Math.PI) / 6);
+        }
+
+        drawBall() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+          ctx.stroke();
+
+          // Draw line intersecting ball at 30 degrees
+          ctx.moveTo(this.xCo1, this.yCo1);
+          ctx.lineTo(this.xCo2, this.yCo2);
+          ctx.stroke();
+
+          // Draw Semi circle to create red half of ball
+          ctx.beginPath();
+          ctx.arc(
+            this.x,
+            this.y,
+            this.radius,
+            (((5 + this.speed) % 12) * Math.PI) / 6,
+            (((11 + this.speed) % 12) * Math.PI) / 6
+          );
+          ctx.fillStyle = "red";
+          ctx.fill();
+
+          // Draw Circle within ball and fill in with white to cover line
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius / 2.5, 0, 2 * Math.PI);
+          ctx.fillStyle = "white";
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // Change velocity and detect edges
+        moveBall() {
+          // Check for bottom and top edge
+          if (this.y > 150 - this.radius || this.y < 0 + this.radius) {
+            this.velocityY *= -1;
+          }
+
+          // check for left and right edge
+          if (this.x > 300 - this.radius || this.x < 0 + this.radius) {
+            this.velocityX *= -1;
+          }
+
+          // add gravity
+
+          if (this.y < 150 - this.radius) {
+            this.velocityY += 0.08;
+          }
+
+          //change direction
+          this.x += this.velocityX;
+          this.y += this.velocityY;
+
+          // update coords for line
+          this.xCo1 = this.x + this.radius * Math.cos((11 * Math.PI) / 6);
+          this.yCo1 = this.y + this.radius * Math.sin((11 * Math.PI) / 6);
+          this.xCo2 = this.x + this.radius * Math.cos((5 * Math.PI) / 6);
+          this.yCo2 = this.y + this.radius * Math.sin((5 * Math.PI) / 6);
+        }
+
+        rotateBall() {
+          // move cartisian coords around the circle
+          this.xCo1 =
+            this.x +
+            this.radius * Math.cos((((11 + this.speed) % 12) * Math.PI) / 6);
+          this.yCo1 =
+            this.y +
+            this.radius * Math.sin((((11 + this.speed) % 12) * Math.PI) / 6);
+          this.xCo2 =
+            this.x +
+            this.radius * Math.cos((((5 + this.speed) % 12) * Math.PI) / 6);
+          this.yCo2 =
+            this.y +
+            this.radius * Math.sin((((5 + this.speed) % 12) * Math.PI) / 6);
+
+          // changes speed and direction of rotaion
+          this.speed += this.rotation;
+        }
+
+        arrowLeft() {
+          this.velocityX--;
+        }
+
+        arrowUp() {
+          this.velocityY--;
+        }
+
+        arrowRight() {
+          this.velocityX++;
+        }
+
+        arrowDown() {
+          this.velocityY++;
+        }
+
+        clickMove(eventX, eventY) {
+          this.x = eventX - canvas.offsetLeft;
+          this.y = eventY - canvas.offsetTop;
+        }
+
+        increaseSpin() {
+          this.rotation += 0.1;
+        }
+
+        decreaseSpin() {
+          this.rotation -= 0.1;
+        }
+      }
+
+      b1 = new Ball(150, 80, 10, 0, 0);
+      b2 = new Ball(80, 25, 20, 1, 3);
+
+      // Add a Javascript event listener to the keypress event.
+      /*
+      window.addEventListener("keypress", function (event) {
+        // Just log the event to the console.
+        console.log(event);
+        b1.drawBall();
+      });*/
+
+      //keypresses with jQuery
+      $(document.body).on("keydown", function (e) {
+        console.log(e.which);
+        switch (e.which) {
+          // key code for left arrow
+          case 37:
+            console.log("left arrow key pressed!");
+            b1.arrowLeft();
+            break;
+
+          // key code for up arrow
+          case 38:
+            console.log("up arrow key pressed!");
+            b1.arrowUp();
+            break;
+
+          // key code for right arrow
+          case 39:
+            console.log("right arrow key pressed!");
+            b1.arrowRight();
+            break;
+
+          // key code for down arrow
+          case 40:
+            console.log("down arrow key pressed!");
+            b1.arrowDown();
+            break;
+
+          // key code for o
+          case 79:
+            console.log("o key pressed!");
+            b1.increaseSpin();
+            break;
+
+          // key code for p
+          case 80:
+            console.log("p key pressed!");
+            b1.decreaseSpin();
+            break;
+        }
+      });
+
+      // reposition ball on mouse click
+      canvas.addEventListener("contextmenu", function (event) {
+        b1.clickMove(event.clientX, event.clientY);
+      });
+
+      // Callback function for animation
+      function repeatme() {
+        ctx.clearRect(0, 0, 600, 400);
+        b1.drawBall();
+        b2.drawBall();
+        b1.moveBall();
+        b2.moveBall();
+        b1.rotateBall();
+        b2.rotateBall();
+        window.requestAnimationFrame(repeatme);
+      }
+
+      // Start animation
+      repeatme();
+    </script>
+  </body>
+</html>

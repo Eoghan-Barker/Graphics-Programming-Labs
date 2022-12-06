@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title></title>
+    <style type="text/css">
+      body {
+        margin: 0;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      let counter = 0;
+
+      // Create scene, camera and renderer to view objects in the window
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(
+        80,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      var renderer = new THREE.WebGLRenderer();
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // Create a sphere within the scene
+      const geometry = new THREE.SphereGeometry(1, 20, 20);
+      const material = new THREE.MeshLambertMaterial(0x00ff00);
+      material.color.setHSL(0.5, 1, 0.5);
+      const sphere = new THREE.Mesh(geometry, material);
+      scene.add(sphere);
+
+      // Move the camera back to be able to see the sphere
+      camera.position.z = 8;
+      camera.position.y = -11;
+      camera.lookAt(0, 0, 0);
+
+      // Change the sphere to wireframes or not
+      material.wireframe = false;
+
+      // Add a spotlight
+      var spotLight = new THREE.SpotLight({ color: 0xffffff });
+      spotLight.position.set(6, -6, 8);
+      scene.add(spotLight);
+
+      var light2 = new THREE.AmbientLight( 0x404040 );
+      scene.add(light2);
+      
+
+      // Enable shaows in the renderer
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap; // to antialias the shadow
+      document.body.appendChild(renderer.domElement);
+
+      // Add a plane below the sphere
+      const geometry2 = new THREE.PlaneGeometry(10, 10);
+      const material2 = new THREE.MeshLambertMaterial({ color: "blue" });
+      const plane = new THREE.Mesh(geometry2, material2);
+      scene.add(plane);
+      plane.position.z = -4;
+
+      // Enable objects to cast/receive shadows
+      spotLight.castShadow = true;
+      //spotLight2.castShadow = true;
+      sphere.castShadow = true;
+      plane.receiveShadow = true;
+
+      // Create camera helper to illustrate source of light
+      var helper = new THREE.CameraHelper(spotLight.shadow.camera);
+      scene.add(helper);
+
+      // Axis helper
+      //const axesHelper = new THREE.AxesHelper( 5 );
+      //scene.add( axesHelper );
+
+      // Create transparent cube
+      const geometry3 = new THREE.BoxGeometry(10 , 10, 8);
+      const material3 = new THREE.MeshLambertMaterial({ color: "red", opacity: 0.4});
+      const cube = new THREE.Mesh(geometry3, material3);
+      cube.position.set(0, 0, 0);
+      material3.transparent = true;
+      scene.add(cube);
+
+      // Add a wireframe around the sphere
+      const wireframe = new THREE.WireframeGeometry( geometry );
+      const material4 = new THREE.LineBasicMaterial({ color: "black"});
+      const line = new THREE.LineSegments( wireframe, material4 );
+      line.material.depthTest = false;
+      line.material.opacity = 0.1;
+      line.material.transparent = true;
+      scene.add( line );
+      
+
+
+      // Speed for sphere movement
+      var velocityX = 0.06;
+      var velocityY = 0.1;
+      var velocityZ = 0.05;
+
+      // Callback function to animate the scene
+      function animate() {
+        // Render the scene and camera
+        renderer.render(scene, camera);
+        // Rotate the sphere
+        sphere.rotation.x += 0.01;
+        sphere.rotation.y += 0.01;
+
+        // Rotate the wireframe
+        line.rotation.x += 0.01;
+        line.rotation.y += 0.01;
+
+        
+        // Add Gravity
+        velocityZ -= 0.01;
+        
+
+        // Check if sphere is hitting edge of box
+        if (sphere.position.x > 4 || sphere.position.x < -4) {
+          velocityX *= -1;
+        }
+        
+        if (sphere.position.y > 4 || sphere.position.y < -4) {
+            
+          velocityY *= -1;
+        }
+
+        // Check if sphere is hitting plane
+        if (sphere.position.z > 3 || sphere.position.z < -3) {
+          velocityZ += 0.01;
+          velocityZ *= -1;
+        }
+
+        
+
+        // Move the sphere
+        sphere.position.x += velocityX;
+        sphere.position.y += velocityY;
+        sphere.position.z += velocityZ;
+
+        
+
+        //Gradually change color of sphere
+        material.color.setHSL(counter, 1, 0.5);
+        counter -= 0.001;
+
+       
+
+        // Move the wireframe sphere with the main sphere
+        line.position.set(sphere.position.x, sphere.position.y, sphere.position.z);
+        
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    </script>
+  </body>
+</html>

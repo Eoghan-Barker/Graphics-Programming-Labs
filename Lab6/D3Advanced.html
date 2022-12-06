@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<style>
+  .zoom {
+    cursor: move;
+    fill: none;
+    pointer-events: all;
+  }
+</style>
+<svg width="960" height="500"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+<script>
+  // Retrieve the JSON data
+  $.getJSON("https://jsonblob.com/api/1039328202555932672", function (data) {
+    console.log(data);
+    plotCO2Data(data);
+  });
+
+  // Executed once the file has been downloaded
+  function plotCO2Data(data) {
+    // Select the svg and setup size and margins
+    var svg = d3.select("svg"),
+      margin = { top: 20, right: 20, bottom: 110, left: 40 },
+      margin2 = { top: 430, right: 20, bottom: 30, left: 40 },
+      width = +svg.attr("width") - margin.left - margin.right,
+      height = +svg.attr("height") - margin.top - margin.bottom,
+      height2 = +svg.attr("height") - margin2.top - margin2.bottom;
+
+    // Create X and Y scales for interpolated CO2 value (y-axis) and time (x-axis)
+    var parseDate = d3.timeParse("%Y-%m-%d");
+    var x = d3
+      .scaleTime()
+      .domain(
+        d3.extent(data, function (d) {
+          return parseDate(d["Date"]);
+        })
+      )
+      .range([0, width]);
+    var y = d3
+      .scaleLinear()
+      .domain(
+        d3.extent(data, function (d) {
+          return d["Interpolated"];
+        })
+      )
+      .range([height, 0]);
+    // Scales for brush graph
+    var x2 = d3
+      .scaleTime()
+      .domain(
+        d3.extent(data, function (d) {
+          return parseDate(d["Date"]);
+        })
+      )
+      .range([0, width]);
+    var y2 = d3
+      .scaleLinear()
+      .domain(
+        d3.extent(data, function (d) {
+          return d["Interpolated"];
+        })
+      )
+      .range([height2, 0]);
+
+    // Setup axes
+    var xAxis = d3.axisBottom(x).ticks(5),
+      xAxis2 = d3.axisBottom(x2).ticks(5),
+      yAxis = d3.axisLeft(y).ticks(5);
+
+    // Setup brush size and calls
+    var brush = d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [width, height2],
+      ])
+      .on("brush end", brushed);
+
+    // setup zoom size, type, calls
+    var zoom = d3
+      .zoom()
+      .scaleExtent([1, Infinity])
+      .translateExtent([
+        [0, 0],
+        [width, height],
+      ])
+      .extent([
+        [0, 0],
+        [width, height],
+      ])
+      .on("zoom", zoomed);
+
+    //interpolated data line
+    var valueLine = d3
+      .line() // draw line - maps x,y coordinates for each point using the scale
+      .x(function (d) {
+        return x(parseDate(d["Date"]));
+      }) // x pixel value for each point
+      .y(function (d) {
+        return y(d["Interpolated"]);
+      }); // y pixel value for each point
+
+    // trend data line
+    var trendLine = d3
+      .line()
+      .x(function (d) {
+        return x(parseDate(d["Date"]));
+      })
+      .y(function (d) {
+        return y(d["Trend"]);
+      });
+
+    // Line for brush graph
+    var trendLine2 = d3
+      .line()
+      .x(function (d) {
+        return x2(parseDate(d["Date"]));
+      })
+      .y(function (d) {
+        return y2(d["Trend"]);
+      });
+
+    //Setup SVGs
+    // Create svg to stop zoom from scrolling off the graph
+    var clip = svg
+      .append("defs")
+      .append("svg:clipPath")
+      .attr("id", "clip")
+      .append("svg:rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("x", 0)
+      .attr("y", 0);
+
+    // Create svg to display the data lines
+    var Line_chart = svg
+      .append("g")
+      .attr("class", "focus")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      .attr("clip-path", "url(#clip)"); // stops the lines from clipping when zoomed
+
+    // Create svg for main axes
+    var focus = svg
+      .append("g")
+      .attr("class", "focus")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Create svg for the brush graph
+    var context = svg
+      .append("g")
+      .attr("class", "context")
+      .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+    // Draw axes and data lines onto relevant svg
+    // Draw X and Y axis
+    focus
+      .append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+    focus.append("g").attr("class", "axis axis--y").call(yAxis);
+
+    // Draw the trendine and the valueline to the main graph
+    Line_chart.append("path")
+      .style("stroke", "red")
+      .style("fill", "none")
+      .attr("class", "valueLine")
+      .attr("d", valueLine(data));
+
+    Line_chart.append("path")
+      .style("stroke", "black")
+      .style("fill", "none")
+      .attr("class", "trendLine")
+      .attr("d", trendLine(data));
+
+    // Draw the x axis, trendline and brush on the small graph
+    //Trendline2
+    context
+      .append("path")
+      .style("stroke", "black")
+      .style("fill", "none")
+      .attr("d", trendLine2(data));
+    //Xaxis2
+    context
+      .append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height2 + ")")
+      .call(xAxis2);
+    //Brush
+    context
+      .append("g")
+      .attr("class", "brush")
+      .call(brush)
+      .call(brush.move, x.range());
+    // Add zoom functionality to the main svg
+    svg
+      .append("rect")
+      .attr("class", "zoom")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      .call(zoom);
+
+    // Add Labels to the axes
+    //X-axis label
+    focus
+      .append("text")
+      .attr("class", "x label")
+      .attr("text-anchor", "end")
+      .attr("x", width)
+      .attr("y", height - 6)
+      .text("Date");
+    //Y-axis label
+    focus
+      .append("text")
+      .attr("class", "y label")
+      .attr("text-anchor", "end")
+      .attr("y", 6)
+      .attr("dy", ".75em")
+      .attr("transform", "rotate(-90)")
+      .text("Atmospheric Carbon Dioxide");
+    // Heading label
+    focus
+      .append("text")
+      .attr("class", "label")
+      .attr("font-weight", "bold")
+      .attr("x", 350)
+      .text("Trends in atmospheric carbon dioxide");
+
+    // Allow user to scroll and zoom the x axis of the main graph using the brush on the small graph
+    function brushed() {
+      if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+      var s = d3.event.selection || x2.range();
+      x.domain(s.map(x2.invert, x2));
+      // Select lines and axis to zoom on
+      Line_chart.select(".trendLine").attr("d", trendLine(data));
+      Line_chart.select(".valueLine").attr("d", valueLine(data));
+      focus.select(".axis--x").call(xAxis);
+      svg
+        .select(".zoom")
+        .call(
+          zoom.transform,
+          d3.zoomIdentity.scale(width / (s[1] - s[0])).translate(-s[0], 0)
+        );
+    }
+
+    // Allow user to zoom x axis by double clicking the main graph
+    function zoomed() {
+      if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+      var t = d3.event.transform;
+      x.domain(t.rescaleX(x2).domain());
+      Line_chart.select(".trendLine").attr("d", trendLine(data));
+      Line_chart.select(".valueLine").attr("d", valueLine(data));
+      focus.select(".axis--x").call(xAxis);
+      // update the small graph
+      context.select(".brush").call(brush.move, x.range().map(t.invertX, t));
+    }
+  }
+</script>
